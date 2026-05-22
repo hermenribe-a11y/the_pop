@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}The Pulse - Informação que pulsa{% endblock %}
+
+{% block content %}
+<div class="space-y-12">
+    <!-- Seção HERO: Grid de 3 destaques -->
+    <section>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for artigo in artigos_destaque %}
+            <a href="{% url 'news:article_detail' artigo.slug %}" class="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition duration-300 {% if forloop.first %}md:col-span-2 md:row-span-2{% endif %}">
+                <div class="aspect-w-16 aspect-h-9 bg-gray-200">
+                    {% if artigo.imagem %}
+                    <img src="{{ artigo.imagem.url }}" alt="{{ artigo.titulo }}" class="w-full h-64 md:h-80 object-cover group-hover:scale-105 transition duration-500" loading="lazy">
+                    {% else %}
+                    <div class="w-full h-64 md:h-80 bg-gradient-to-br from-red-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold">
+                        {{ artigo.titulo|first }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-6">
+                    {% if artigo.categoria %}
+                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white mb-3" style="background-color: {{ artigo.categoria.cor_badge }}; width: fit-content;">
+                        {{ artigo.categoria.name }}
+                    </span>
+                    {% endif %}
+                    <h2 class="text-white font-bold text-xl md:text-2xl mb-2 font-serif">{{ artigo.titulo }}</h2>
+                    <p class="text-gray-300 text-sm line-clamp-2">{{ artigo.resumo|truncatechars:120 }}</p>
+                    <div class="flex items-center text-gray-400 text-xs mt-3 space-x-3">
+                        <span>{{ artigo.data_publicacao|date:"d/m/Y" }}</span>
+                        <span>{{ artigo.tempo_leitura }} min de leitura</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Seção ÚLTIMAS NOTÍCIAS -->
+    <section>
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 font-serif">Últimas Notícias</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for artigo in ultimas_noticias %}
+            <article class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition">
+                <a href="{% url 'news:article_detail' artigo.slug %}">
+                    {% if artigo.imagem %}
+                    <img src="{{ artigo.imagem.url }}" alt="{{ artigo.titulo }}" class="w-full h-48 object-cover" loading="lazy">
+                    {% else %}
+                    <div class="w-full h-48 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold">
+                        {{ artigo.titulo|first }}
+                    </div>
+                    {% endif %}
+                </a>
+                <div class="p-5">
+                    {% if artigo.categoria %}
+                    <span class="inline-block px-2 py-1 rounded text-xs font-semibold text-white mb-2" style="background-color: {{ artigo.categoria.cor_badge }};">
+                        {{ artigo.categoria.name }}
+                    </span>
+                    {% endif %}
+                    <h3 class="font-bold text-lg mb-2 font-serif">
+                        <a href="{% url 'news:article_detail' artigo.slug %}" class="text-gray-900 hover:text-red-600 transition">
+                            {{ artigo.titulo }}
+                        </a>
+                    </h3>
+                    <p class="text-gray-600 text-sm mb-3">{{ artigo.resumo|truncatechars:100 }}</p>
+                    <div class="flex items-center justify-between text-xs text-gray-400">
+                        <span>{{ artigo.data_publicacao|date:"d/m/Y" }}</span>
+                        <span>{{ artigo.tempo_leitura }} min de leitura</span>
+                    </div>
+                </div>
+            </article>
+            {% empty %}
+            <div class="col-span-full text-center py-12">
+                <p class="text-gray-500 text-lg">Nenhuma notícia publicada ainda.</p>
+                <p class="text-gray-400 mt-2">Volte em breve para conferir as novidades.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

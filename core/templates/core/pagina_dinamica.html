@@ -1,0 +1,11 @@
+
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ pagina.titulo }} - The Pulse{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <h1>{{ pagina.titulo }}</h1>
+    <hr>
+    <div>{{ pagina.conteudo|safe }}</div>
+</div>
+{% endblock %}

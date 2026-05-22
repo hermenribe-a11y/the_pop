@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% block title %}Pulse Scanner - Pentest Web{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold">Pulse Scanner</h1>
+        <p class="text-gray-400">Ferramenta de teste de segurança para websites Django e outros</p>
+    </div>
+
+    <!-- Formulário -->
+    <div class="bg-gray-800 rounded-xl p-6 border border-gray-700 mb-8">
+        <h2 class="text-xl font-bold mb-4">Configurar Alvo</h2>
+        <form id="scanForm" onsubmit="return iniciarScan(event)" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">URL Base do Alvo</label>
+                <input type="url" name="alvo" value="http://127.0.0.1:8000" 
+                       class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-500" required>
+                <p class="text-xs text-gray-500 mt-1">Ex: http://meusite.com ou http://127.0.0.1:8000</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Paths para testar (separados por vírgula)</label>
+                <input type="text" name="paths" value="/,/admin/,/login/,/busca/?q=teste" 
+                       class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-500">
+                <p class="text-xs text-gray-500 mt-1">Deixe vazio para usar paths padrão</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Cookies de sessão (opcional)</label>
+                <input type="text" name="cookies" value="" 
+                       class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-red-500" 
+                       placeholder="sessionid=abc123; csrftoken=xyz">
+                <p class="text-xs text-gray-500 mt-1">Formato: chave=valor; chave2=valor2</p>
+            </div>
+            <button type="submit" id="btnScan" 
+                    class="px-8 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition glow-red">
+                Iniciar Ataque / Scan
+            </button>
+        </form>
+    </div>
+
+    <!-- Status -->
+    <div id="status" class="hidden bg-gray-800 rounded-xl p-6 mb-6 border border-gray-700">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+            <span id="statusTexto" class="font-semibold">A atacar...</span>
+            <span id="alvoAtual" class="text-sm text-gray-400 ml-2"></span>
+        </div>
+        <div class="w-full bg-gray-700 rounded-full h-3">
+            <div id="barra" class="bg-red-500 h-3 rounded-full transition-all" style="width:0%"></div>
+        </div>
+        <p id="porcentagem" class="text-sm text-gray-400 mt-2">0%</p>
+    </div>
+
+    <!-- Resultados -->
+    <div id="resultados" class="hidden space-y-6">
+        <div class="bg-gray-800 rounded-xl p-8 text-center border border-gray-700">
+            <h2 class="text-gray-400 mb-2">Score de Vulnerabilidade</h2>
+            <div id="scoreNum" class="text-5xl font-bold">--</div>
+            <div class="w-full bg-gray-700 rounded-full h-3 mt-4 max-w-sm mx-auto">
+                <div id="scoreBar" class="h-3 rounded-full" style="width:0%"></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-gray-800 rounded-xl p-4 border border-gray-700 text-center">
+                <p class="text-gray-400 text-sm">Config Django</p>
+                <div class="mt-1 text-sm">
+                    <span id="passCount" class="text-green-400">0 PASS</span> 
+                    <span id="failCount" class="text-red-400">0 FAIL</span> 
+                    <span id="warnCount" class="text-yellow-400">0 WARN</span>
+                </div>
+            </div>
+            <div class="bg-gray-800 rounded-xl p-4 border border-gray-700 text-center">
+                <p class="text-gray-400 text-sm">Vulns em URLs</p>
+                <p id="urlCount" class="text-2xl font-bold mt-1">0</p>
+            </div>
+            <div class="bg-gray-800 rounded-xl p-4 border border-gray-700 text-center">
+                <p class="text-gray-400 text-sm">Issues de Código</p>
+                <p id="codeCount" class="text-2xl font-bold mt-1">0</p>
+            </div>
+            <div class="bg-gray-800 rounded-xl p-4 border border-gray-700 text-center">
+                <p class="text-gray-400 text-sm">Dependências</p>
+                <p id="depCount" class="text-2xl font-bold mt-1">0</p>
+            </div>
+        </div>
+
+        <!-- Vulnerabilidades encontradas -->
+        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <h2 class="text-xl font-bold mb-4">Vulnerabilidades Encontradas</h2>
+            <div id="vulnLista" class="space-y-2">
+                <p class="text-gray-400">Nenhuma vulnerabilidade encontrada.</p>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <h2 class="text-xl font-bold mb-4">Verificações Django</h2>
+            <div id="djangoLista" class="space-y-2"></div>
+        </div>
+
+        <div class="text-center">
+            <a id="btnPdf" href="/relatorio" class="inline-block px-8 py-4 bg-green-600 hover:bg-green-700 rounded-lg font-semibold transition">
+                Baixar Relatório PDF
+            </a>
+        </div>
+    </div>
+
+    <div id="vazio" class="text-center py-16">
+        <div class="text-6xl mb-4">🔍</div>
+        <h2 class="text-2xl font-bold mb-2">Pronto para Atacar</h2>
+        <p class="text-gray-400">Configure o alvo acima e clique em "Iniciar Ataque / Scan"</p>
+    </div>
+</div>
+
+<script>
+function iniciarScan(event) {
+    event.preventDefault();
+    const form = document.getElementById('scanForm');
+    const formData = new FormData(form);
+    
+    document.getElementById('btnScan').disabled = true;
+    document.getElementById('btnScan').innerText = 'Atacando...';
+    document.getElementById('status').classList.remove('hidden');
+    document.getElementById('resultados').classList.add('hidden');
+    document.getElementById('vazio').classList.add('hidden');
+    document.getElementById('alvoAtual').innerText = 'Alvo: ' + formData.get('alvo');
+    
+    fetch('/scan', { method: 'POST', body: formData })
+        .then(r=>r.json())
+        .then(d=>{
+            if(d.ok) setTimeout(pollStatus, 1000);
+            else alert(d.msg);
+        });
+    return false;
+}
+
+function pollStatus() {
+    fetch('/status').then(r=>r.json()).then(d=>{
+        const r = d.resultados || {};
+        const p = r.progresso || 0;
+        document.getElementById('barra').style.width = p+'%';
+        document.getElementById('porcentagem').innerText = p+'%';
+        
+        if(d.rodando) {
+            setTimeout(pollStatus, 1000);
+        } else if(r.status === 'completo') {
+            mostrarResultados(r);
+        } else if(r.status === 'erro') {
+            alert('Erro: ' + (r.erro || 'desconhecido'));
+            document.getElementById('btnScan').disabled = false;
+            document.getElementById('btnScan').innerText = 'Reiniciar';
+        }
+    });
+}
+
+function mostrarResultados(r) {
+    document.getElementById('status').classList.add('hidden');
+    document.getElementById('resultados').classList.remove('hidden');
+    document.getElementById('btnScan').disabled = false;
+    document.getElementById('btnScan').innerText = 'Novo Ataque';
+    
+    // Score (quanto menor, mais vulnerável)
+    const score = r.score || 0;
+    document.getElementById('scoreNum').innerText = score+'/100';
+    const sb = document.getElementById('scoreBar');
+    sb.style.width = score+'%';
+    if(score >= 80) { sb.className = 'h-3 rounded-full bg-green-500'; document.getElementById('scoreNum').className = 'text-5xl font-bold text-green-400'; }
+    else if(score >= 50) { sb.className = 'h-3 rounded-full bg-yellow-500'; document.getElementById('scoreNum').className = 'text-5xl font-bold text-yellow-400'; }
+    else { sb.className = 'h-3 rounded-full bg-red-500'; document.getElementById('scoreNum').className = 'text-5xl font-bold text-red-400'; }
+    
+    // Django checks
+    const checks = r.django || [];
+    let p=0,f=0,w=0;
+    checks.forEach(c => { if(c.status==='PASS') p++; else if(c.status==='FAIL') f++; else w++; });
+    document.getElementById('passCount').innerText = p+' PASS';
+    document.getElementById('failCount').innerText = f+' FAIL';
+    document.getElementById('warnCount').innerText = w+' WARN';
+    
+    const dl = document.getElementById('djangoLista');
+    dl.innerHTML = '';
+    checks.forEach(c => {
+        const cor = c.status==='PASS' ? 'border-green-500/30 bg-green-500/10 text-green-400' :
+                     c.status==='FAIL' ? 'border-red-500/30 bg-red-500/10 text-red-400' :
+                     'border-yellow-500/30 bg-yellow-500/10 text-yellow-400';
+        const icone = c.status==='PASS' ? '✅' : c.status==='FAIL' ? '❌' : '⚠️';
+        const div = document.createElement('div');
+        div.className = 'flex gap-3 p-3 rounded-lg border '+cor;
+        div.innerHTML = '<span>'+icone+'</span><div class="flex-1"><p class="font-medium">'+c.check+'</p><p class="text-sm opacity-80">'+c.descricao+'</p>'+
+            (c.correcao ? '<p class="text-xs mt-1 opacity-60">💡 '+c.correcao+'</p>' : '')+'</div><span class="text-xs font-bold uppercase">'+(c.severity||c.severidade||'')+'</span>';
+        dl.appendChild(div);
+    });
+    
+    // Vulnerabilidades em URLs
+    const vulns = r.url || [];
+    document.getElementById('urlCount').innerText = vulns.length;
+    const vl = document.getElementById('vulnLista');
+    vl.innerHTML = '';
+    if(vulns.length === 0) {
+        vl.innerHTML = '<p class="text-gray-400">Nenhuma vulnerabilidade encontrada nas URLs testadas.</p>';
+    } else {
+        vulns.forEach(v => {
+            const div = document.createElement('div');
+            div.className = 'p-3 rounded-lg border border-red-500/30 bg-red-500/10 text-sm';
+            div.innerHTML = '<span class="font-medium text-red-400">'+(v.tipo||'?')+'</span>: '+(v.detalhes||v.url||'?')+
+                ' <span class="text-xs ml-2 opacity-60">Severidade: '+(v.severidade||'?')+'</span>';
+            vl.appendChild(div);
+        });
+    }
+    
+    // Código
+    document.getElementById('codeCount').innerText = (r.codigo && r.codigo.total_issues) || 0;
+    // Dependências
+    document.getElementById('depCount').innerText = r.deps || 0;
+}
+</script>
+{% endblock %}
