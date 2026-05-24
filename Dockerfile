@@ -12,4 +12,4 @@ RUN bash /app/build.sh
 
 EXPOSE $PORT
 
-CMD ["gunicorn", "the_pulse.wsgi:application", "--bind", "0.0.0.0:$PORT"]
+CMD gunicorn the_pulse.wsgi:application --bind 0.0.0.0:$PORT
