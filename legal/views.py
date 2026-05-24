@@ -8,3 +8,6 @@ class TermosView(TemplateView):
 
 class ContatoView(TemplateView):
     template_name = 'legal/contato.html'
+
+class sobre_nosView(TemplateView):
+    template_name = 'legal/sobre_nos.html'
