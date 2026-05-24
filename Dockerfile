@@ -10,6 +10,8 @@ COPY . .
 RUN chmod +x /app/build.sh
 RUN bash /app/build.sh
 
+RUN chmod +x /app/entrypoint.sh
+
 EXPOSE $PORT
 
-CMD gunicorn the_pulse.wsgi:application --bind 0.0.0.0:$PORT
+ENTRYPOINT ["/app/entrypoint.sh"]
